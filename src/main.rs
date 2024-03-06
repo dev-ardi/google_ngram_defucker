@@ -13,8 +13,8 @@ struct Cli {
 
 fn analyze_1grams() {
     let f = std::fs::read("1grams.postcard").unwrap();
-    let grams: Vec<Vec<Freq>> = postcard::from_bytes(&f).unwrap();
-    println!("{:?}", grams[0]);
+    let grams: Vec<Freq> = postcard::from_bytes(&f).unwrap();
+    println!("{:?}", grams[..100]);
 }
 
 fn main() {
