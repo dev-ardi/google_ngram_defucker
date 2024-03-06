@@ -1,15 +1,18 @@
 #!/bin/python3
 import os
+import sys
 import requests
 
-dir = "2grams"
+
+dir = sys.argv[1]
+
 
 # Check if directory exists
 if not os.path.exists(dir):
     os.mkdir(dir)
 
 # Read each line in 2grams.txt
-with open("2grams.txt", "r") as file:
+with open(dir + ".txt", "r") as file:
     for line in file:
         line = line.strip()
         file_name = os.path.basename(line)
