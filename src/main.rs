@@ -43,27 +43,9 @@ fn dedup_cases(mut freqs: Vec<Freq>) -> Vec<Freq> {
 
 type Filter = fn(Vec<Freq>) -> Vec<Freq>;
 fn main() {
-    // onegrams();
-    // return;
-    let cli = Cli::parse();
-    let ptrs = cli.command.iter().map(|command| match command.as_str() {
-        "dedup" => dedup,
-        "case_insensitive" => dedup_cases,
-        _ => unimplemented!()
-    });
-
-    let mut freqs = load_1grams("1grams.postcard");
-    println!("Found {} words: {}MB", freqs.len(), freqs.len() * std::mem::size_of::<Freq>() / (1024 * 1024));
-    for i in ptrs {
-        freqs = i(freqs);
-    }
-
-    match cli.save.as_deref() {
-        Some(path) => write_postcard(path, &freqs),
-        _ => {
-            for i in freqs.iter().take(100) {
-                //println!("{:?}", i);
-            }
-        }
-    }
+    let freqs = load_1grams("1grams.postcard");
+    let len1 = freqs.len();
+    println!("Found {} words: {}MB", len1, len1 * std::mem::size_of::<Freq>() / (1024 * 1024));
+    let freqs = dedup(freqs);
+    println!("deleted {} keys", len1 - freqs.len());
 }

@@ -48,6 +48,7 @@ pub fn dedup(freqs: Vec<Freq>) -> Vec<Freq> {
         }
     }
     println!("dedup took {:?}", t.elapsed());
+    let t = Instant::now();
 
     let mut vec = map
         .into_iter()
