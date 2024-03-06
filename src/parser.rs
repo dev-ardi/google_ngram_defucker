@@ -1,5 +1,7 @@
-
-use std::io::prelude::*; use std::{
+use itertools::Itertools;
+use hashbrown::HashMap;
+use std::io::prelude::*;
+use std::{
     fs::File,
     path::{Path, PathBuf},
     time::Instant,
@@ -14,9 +16,54 @@ use walkdir::WalkDir;
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug)]
 pub struct Freq {
-    token: Box<str>,
-    occurrences: u32,
-    books: u32,
+    pub token: Box<str>,
+    pub occurrences: u32,
+    pub books: u32,
+}
+
+#[derive(Default, Serialize, Deserialize, Clone, Debug)]
+pub struct FreqMember {
+    pub occurrences: u32,
+    pub books: u32,
+}
+
+pub fn dedup(freqs: Vec<Freq>) -> Vec<Freq> {
+    let t = Instant::now();
+    let mut map: HashMap<Box<str>, FreqMember> = HashMap::with_capacity(freqs.len());
+    let mut dedup_count = 0;
+
+    for i in freqs {
+        match map.entry(i.token) {
+            hashbrown::hash_map::Entry::Occupied(mut e) => {
+                let e = e.get_mut();
+                e.books += i.books;
+                e.occurrences += i.occurrences;
+            }
+            hashbrown::hash_map::Entry::Vacant(v) => {
+                v.insert(FreqMember {
+                    occurrences: i.occurrences,
+                    books: i.books,
+                });
+            }
+        }
+    }
+    println!("dedup took {:?}", t.elapsed());
+
+    let mut vec = map
+        .into_iter()
+        .map(|(token, comps)| Freq {
+            token,
+            occurrences: comps.occurrences,
+            books: comps.books,
+        })
+        .collect_vec();
+
+    println!("collect took {:?}", t.elapsed());
+    let t = Instant::now();
+    vec.par_sort_unstable_by_key(|f| std::cmp::Reverse(f.occurrences));
+    println!("sort reverse took {:?}", t.elapsed());
+    let t = Instant::now();
+    vec
 }
 
 pub fn extract_ngram(input: String) -> anyhow::Result<Vec<Freq>> {
@@ -79,9 +126,6 @@ pub fn extract_ngram(input: String) -> anyhow::Result<Vec<Freq>> {
         "vec is {}KB",
         storage.len() * std::mem::size_of::<Freq>() / (8 * 1024)
     );
-    // let t0 = Instant::now();
-    // storage.sort_unstable_by_key(|x| x.occurrences);
-    // println!("sorting took {:?}", t0.elapsed());
 
     Ok(storage)
 }
@@ -94,7 +138,6 @@ pub fn uncompressed_twograms() -> anyhow::Result<()> {
             x
         })
         .collect();
-    // input.swap_remove(0);
 
     let grams = input
         .iter()
@@ -169,20 +212,17 @@ pub fn onegrams() {
     grams1.par_sort_unstable_by_key(|x| x.occurrences);
     println!("sorting took {:?}", t.elapsed());
 
+    write_postcard("./1grams.postcard", &grams1);
+}
+
+pub fn write_postcard(path: &str, freqs: &[Freq]) {
     print!("Serializing...");
     let t = Instant::now();
-    let output = postcard::to_allocvec(&grams1).unwrap();
+    let output = postcard::to_allocvec(&freqs).unwrap();
     println!("done in {:?}", t.elapsed());
     let t = Instant::now();
     print!("Writing to file...");
-    std::fs::write("./1grams.postcard", &output).unwrap();
-    println!("done in {:?}", t.elapsed());
-    let t = Instant::now();
-
-    print!("Writing to file (gzip)...");
-    let f = File::create("./1grams.postcard.gz").unwrap();
-    let mut e = flate2::write::GzEncoder::new(f, Compression::default());
-    e.write_all(&output).unwrap();
+    std::fs::write(path, &output).unwrap();
     println!("done in {:?}", t.elapsed());
 }
 
