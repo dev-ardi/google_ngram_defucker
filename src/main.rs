@@ -1,9 +1,8 @@
-
+#![allow(unused)]
 use clap::Parser;
 use parser::{onegrams, Freq};
 
 mod parser;
-
 
 #[derive(Parser)]
 struct Cli {
@@ -14,8 +13,8 @@ struct Cli {
 
 fn analyze_1grams() {
     let f = std::fs::read("1grams.postcard").unwrap();
-    let grams: Vec<Freq> = postcard::from_bytes(&f).unwrap();
-    println!("{:?}",grams[..100]);
+    let grams: Vec<Vec<Freq>> = postcard::from_bytes(&f).unwrap();
+    println!("{:?}", grams[0]);
 }
 
 fn main() {
@@ -23,6 +22,6 @@ fn main() {
     match cli.parse.as_deref() {
         Some("1grams") => onegrams(),
         Some(_) => todo!(),
-        None => analyze_1grams()
+        None => analyze_1grams(),
     };
 }

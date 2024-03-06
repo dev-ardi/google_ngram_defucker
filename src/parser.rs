@@ -79,9 +79,9 @@ pub fn extract_ngram(input: String) -> anyhow::Result<Vec<Freq>> {
         "vec is {}KB",
         storage.len() * std::mem::size_of::<Freq>() / (8 * 1024)
     );
-    let t0 = Instant::now();
-    storage.sort_unstable_by_key(|x| x.occurrences);
-    println!("sorting took {:?}", t0.elapsed());
+    // let t0 = Instant::now();
+    // storage.sort_unstable_by_key(|x| x.occurrences);
+    // println!("sorting took {:?}", t0.elapsed());
 
     Ok(storage)
 }
@@ -154,14 +154,20 @@ pub fn get_filenames(folder: &str) -> impl Iterator<Item = PathBuf> {
 }
 
 pub fn onegrams() {
-    let grams1 = get_filenames("1grams")
+    let mut grams1 = get_filenames("1grams")
         .par_bridge()
         .inspect(|x| {
             println!("processing {}", x.to_string_lossy());
         })
         .map(|x| uncompress(&x))
         .flat_map(extract_ngram)
-        .collect::<Vec<_>>();
+        .flatten()
+        .collect::<Vec<Freq>>();
+
+    print!("Done, sorting...");
+    let t = Instant::now();
+    grams1.par_sort_unstable_by_key(|x| x.occurrences);
+    println!("sorting took {:?}", t.elapsed());
 
     print!("Serializing...");
     let t = Instant::now();
