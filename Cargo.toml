@@ -10,6 +10,7 @@ debug = true
 [dependencies]
 anyhow = { version = "1.0.71", features = ["backtrace"] }
 clap = { version = "4.5.1", features = ["derive"] }
+compact_str = { version = "0.7.1", features = ["serde"] }
 criterion = "0.5.1"
 flate2 = "1.0.28"
 hashbrown = { version = "0.14.3", features = ["rayon"] }
@@ -17,6 +18,5 @@ itertools = "0.12.1"
 memmap2 = "0.9.4"
 postcard = { version = "1.0.4", features = ["alloc"] }
 rayon = "1.7.0"
-reqwest = { version = "0.11.18", features = ["gzip", "blocking"] }
 serde = { version = "1.0.171", features = ["derive"] }
 walkdir = "2.3.3"

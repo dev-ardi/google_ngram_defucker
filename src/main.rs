@@ -2,6 +2,7 @@
 use std::collections::HashMap;
 
 use clap::Parser;
+use compact_str::CompactString;
 use itertools::Itertools;
 use parser::{dedup, onegrams, write_postcard, Freq};
 use serde::{Deserialize, Serialize};
@@ -43,7 +44,7 @@ fn dedup_cases(mut freqs: Vec<Freq>) -> Vec<Freq> {
 
 type Filter = fn(Vec<Freq>) -> Vec<Freq>;
 fn main() {
-    let freqs = load_1grams("1grams.postcard");
+    let freqs = load_1grams("1grams_compact_str.postcard");
     let len1 = freqs.len();
     println!("Found {} words: {}MB", len1, len1 * std::mem::size_of::<Freq>() / (1024 * 1024));
     let freqs = dedup(freqs);

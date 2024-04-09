@@ -1,5 +1,6 @@
-use itertools::Itertools;
+use compact_str::CompactString;
 use hashbrown::HashMap;
+use itertools::Itertools;
 use std::io::prelude::*;
 use std::{
     fs::File,
@@ -16,7 +17,7 @@ use walkdir::WalkDir;
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug)]
 pub struct Freq {
-    pub token: Box<str>,
+    pub token: CompactString,
     pub occurrences: u32,
     pub books: u32,
 }
@@ -29,7 +30,7 @@ pub struct FreqMember {
 
 pub fn dedup(freqs: Vec<Freq>) -> Vec<Freq> {
     let t = Instant::now();
-    let mut map: HashMap<Box<str>, FreqMember> = HashMap::with_capacity(freqs.len());
+    let mut map: HashMap<CompactString, FreqMember> = HashMap::with_capacity(freqs.len());
     let mut dedup_count = 0;
 
     for i in freqs {
@@ -94,13 +95,13 @@ pub fn extract_ngram(input: String) -> anyhow::Result<Vec<Freq>> {
             .parse()
             .map_err(|e| anyhow::anyhow!("Error parsing in line {count}:\n{e}"))?;
 
-        if token == last_freq.token.as_ref() {
+        if token == last_freq.token {
             last_freq.occurrences += occurrences;
             last_freq.books += books;
         } else {
             storage.push(last_freq);
             last_freq = Freq {
-                token: Box::from(token),
+                token: CompactString::from(token),
                 occurrences,
                 books,
             };
@@ -157,10 +158,6 @@ pub fn uncompressed_twograms() -> anyhow::Result<()> {
             }
         })
         .collect::<Vec<_>>();
-    // println!("deleting original files...");
-    // for i in input.iter() {
-    //     std::fs::remove_file(i).unwrap();
-    // }
 
     let t0 = Instant::now();
     println!("done. serializing...");
@@ -227,13 +224,13 @@ pub fn write_postcard(path: &str, freqs: &[Freq]) {
     println!("done in {:?}", t.elapsed());
 }
 
-pub fn downloader(files: &str) {
-    let mut path = PathBuf::from("2grams");
-    for i in files.lines() {
-        println!("downloading {i}");
-        let res = reqwest::blocking::get(i).unwrap().bytes().unwrap();
-        path.push(&i[5..]);
-        std::fs::write(&path, res).unwrap();
-        path.pop();
-    }
-}
+// pub fn downloader(files: &str) {
+//     let mut path = PathBuf::from("2grams");
+//     for i in files.lines() {
+//         println!("downloading {i}");
+//         let res = reqwest::blocking::get(i).unwrap().bytes().unwrap();
+//         path.push(&i[5..]);
+//         std::fs::write(&path, res).unwrap();
+//         path.pop();
+//     }
+// }
